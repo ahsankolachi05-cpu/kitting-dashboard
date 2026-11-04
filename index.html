@@ -1,0 +1,983 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Kitting Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        color-scheme: light dark;
+        --bg:#edf0f3; --surface:#ffffff; --surface2:#f4f7f9; --surface3:#e8edf1;
+        --ink:#17222e; --ink2:#33465a; --muted:#5f7185; --line:#d5dde4; --line2:#bcc9d4;
+        --accent:#0b6e63; --accent-ink:#ffffff; --accent-soft:#e2f2ef;
+        --navy:#16283c; --navy-ink:#eef4f9; --navy-muted:#9db2c6;
+        --good:#177245; --good-bg:#e3f3e9;
+        --warn:#9a6206; --warn-bg:#fdf0d7;
+        --bad:#b3352b; --bad-bg:#fbe9e6;
+        --sample:#8a5a00; --sample-bg:#fdeec3; --sample-line:#e3c56a;
+        --y2023:#879eb2; --y2024:#0b6e63; --y2025:#cf8507;
+        --shadow:0 1px 2px rgba(18,32,48,.06),0 4px 14px rgba(18,32,48,.05);
+        --radius:10px;
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#0e141b; --surface:#17222d; --surface2:#1c2936; --surface3:#243444;
+          --ink:#e9eff5; --ink2:#c3d2df; --muted:#93a8bb; --line:#2b3d4e; --line2:#3a5069;
+          --accent:#2cb39f; --accent-ink:#0b1a17; --accent-soft:#14332e;
+          --navy:#0a121c; --navy-ink:#eef4f9; --navy-muted:#8ba1b7;
+          --good:#4cc07e; --good-bg:#143325;
+          --warn:#e5aa45; --warn-bg:#3a2c10;
+          --bad:#ef7a6c; --bad-bg:#3d1d18;
+          --sample:#eec25e; --sample-bg:#3a2f10; --sample-line:#6b5716;
+          --y2023:#7d97ad; --y2024:#2cb39f; --y2025:#e0a33e;
+          --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.25);
+        }
+      }
+      *{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%}
+      body{margin:0;background:var(--bg);color:var(--ink);
+        font-family:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+        font-size:15px;line-height:1.45;}
+      .mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+      button{font:inherit;cursor:pointer}
+      input,select,textarea{font:inherit;color:var(--ink)}
+      :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+      h1,h2,h3{margin:0;line-height:1.2}
+      .wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+
+      /* ---------- top bar ---------- */
+      .topbar{background:var(--navy);color:var(--navy-ink);position:sticky;top:0;z-index:40;
+        box-shadow:0 2px 10px rgba(5,12,20,.25)}
+      .topbar-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 0}
+      .brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+      .brand h1{font-size:21px;font-weight:800;letter-spacing:.2px;white-space:nowrap}
+      .brand .yr{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--navy-muted);
+        border:1px solid rgba(255,255,255,.25);padding:2px 8px;border-radius:20px}
+      .brand .sub{font-size:12.5px;color:var(--navy-muted);white-space:nowrap}
+      .top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+      .btn{border:1px solid transparent;border-radius:8px;padding:8px 14px;font-weight:600;font-size:13.5px;
+        background:var(--accent);color:var(--accent-ink);transition:background .15s,border-color .15s}
+      .btn:hover{filter:brightness(1.07)}
+      .btn.ghost{background:transparent;color:var(--navy-ink);border-color:rgba(255,255,255,.35)}
+      .btn.ghost:hover{border-color:rgba(255,255,255,.7);filter:none}
+      .btn.danger-ghost{background:transparent;color:#f0a49c;border-color:rgba(240,164,156,.4)}
+      .btn.danger-ghost.armed{background:var(--bad);color:#fff;border-color:var(--bad)}
+      .btn.light{background:var(--surface);color:var(--ink);border-color:var(--line2)}
+      .btn.small{padding:6px 10px;font-size:12.5px}
+      .btn[hidden]{display:none}
+
+      .demo-note{background:var(--sample-bg);color:var(--sample);border-bottom:1px solid var(--sample-line);
+        font-size:13px;font-weight:600}
+      .demo-note .wrap{padding-top:7px;padding-bottom:7px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+      .demo-note .dot{width:8px;height:8px;border-radius:50%;background:var(--sample);flex:none}
+
+      /* ---------- tabs ---------- */
+      .tabs{position:sticky;top:0;z-index:30;background:var(--bg);padding-top:12px}
+      .tabs-in{display:flex;flex-wrap:wrap;gap:6px}
+      .tabbtn{border:1px solid var(--line);background:var(--surface);color:var(--ink2);
+        border-radius:8px;padding:8px 13px;font-weight:600;font-size:13.5px}
+      .tabbtn:hover{border-color:var(--line2);color:var(--ink)}
+      .tabbtn.active{background:var(--navy);color:var(--navy-ink);border-color:var(--navy)}
+      .tabbtn .cnt{font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--accent-soft);color:var(--accent);
+        border-radius:10px;padding:0 6px;margin-left:6px}
+      .tabbtn.active .cnt{background:rgba(255,255,255,.16);color:var(--navy-ink)}
+
+      main{padding:18px 0 30px}
+      .panel{display:none}
+      .panel.active{display:block}
+      .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+      .pad{padding:16px}
+      .panel-head{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+      .panel-head h2{font-size:20px;font-weight:800}
+      .panel-head .sheet{font-size:12.5px;color:var(--muted);font-weight:600}
+      .date-ctl{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .date-ctl label{font-size:12.5px;font-weight:600;color:var(--muted);display:flex;align-items:center;gap:8px}
+      input[type="date"]{border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 10px;font-weight:600}
+      .day-name{font-weight:700;font-size:13.5px;color:var(--ink2)}
+      .chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;border-radius:20px;padding:2px 9px;white-space:nowrap}
+      .chip.sample{background:var(--sample-bg);color:var(--sample);border:1px solid var(--sample-line)}
+      .chip.ok{background:var(--good-bg);color:var(--good)}
+      .chip.none{background:var(--surface3);color:var(--muted)}
+
+      /* ---------- dashboard ---------- */
+      .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:10px}
+      .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow)}
+      .kpi .lb{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.02em}
+      .kpi .v{font-family:"IBM Plex Mono",monospace;font-size:25px;font-weight:700;margin-top:3px;line-height:1.1}
+      .kpi .v small{font-size:13px;color:var(--muted);font-weight:600}
+      .kpi .vs{font-size:12px;margin-top:4px;font-weight:600;color:var(--muted)}
+      .kpi .vs b{font-family:"IBM Plex Mono",monospace}
+      .kpi.good{border-color:var(--good)} .kpi.good .vs{color:var(--good)}
+      .kpi.warn{border-color:var(--warn)} .kpi.warn .vs{color:var(--warn)}
+      .kpi.bad{border-color:var(--bad)} .kpi.bad .vs{color:var(--bad)}
+      .kpi.empty .v{color:var(--muted)}
+      .dash-cols{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+      @media(min-width:960px){.dash-cols{grid-template-columns:1.65fr 1fr}}
+      .sec-title{font-size:15px;font-weight:800;margin-bottom:4px}
+      .sec-sub{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+      .day-status{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:14px}
+      .status-card{padding:12px 14px}
+      .status-card h3{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+      .status-card .fig{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink2);margin-top:6px;line-height:1.7}
+      .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;font-weight:600;color:var(--ink2);margin:6px 0 2px}
+      .legend .sw{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:5px;vertical-align:-1px}
+      .chart-box{width:100%}
+      .chart-box svg{width:100%;height:auto;display:block}
+      .chart-box text{font-family:"Archivo",sans-serif}
+
+      /* ---------- forms ---------- */
+      .fgroup{margin-bottom:14px}
+      .fgroup>h3{font-size:13px;font-weight:800;color:var(--ink2);letter-spacing:.03em;text-transform:uppercase;margin-bottom:9px}
+      .fgroup .note{font-size:12.5px;color:var(--muted);margin-top:6px}
+      .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:11px}
+      .fgrid.wide{grid-template-columns:1fr}
+      .fld label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:4px}
+      .fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line2);background:var(--surface2);
+        border-radius:8px;padding:8px 10px;font-size:14.5px}
+      .fld input[type="number"]{font-family:"IBM Plex Mono",monospace}
+      .fld input:disabled{background:var(--surface3);color:var(--muted)}
+      .fld textarea{resize:vertical;min-height:56px}
+      .kpigroups{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:11px}
+      .kpig{border:1px solid var(--line);border-radius:var(--radius);padding:11px 12px;background:var(--surface2)}
+      .kpig h4{margin:0 0 9px;font-size:13.5px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px}
+      .kpig h4 .tgt{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);font-weight:600}
+      .kpig .row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+      .kpig .kpi-out{margin-top:9px;display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700}
+      .kpig .kpi-out .val{font-family:"IBM Plex Mono",monospace;font-size:16px}
+      .pill{font-size:11px;font-weight:800;border-radius:12px;padding:1px 8px}
+      .pill.good{background:var(--good-bg);color:var(--good)}
+      .pill.warn{background:var(--warn-bg);color:var(--warn)}
+      .pill.bad{background:var(--bad-bg);color:var(--bad)}
+      .pill.none{background:var(--surface3);color:var(--muted)}
+      .auto-panel{display:flex;flex-wrap:wrap;gap:10px;margin:4px 0 14px}
+      .auto-item{background:var(--accent-soft);border:1px solid var(--line);border-radius:var(--radius);padding:9px 13px;min-width:150px}
+      .auto-item .lb{font-size:11.5px;font-weight:700;color:var(--muted)}
+      .auto-item .v{font-family:"IBM Plex Mono",monospace;font-size:19px;font-weight:700}
+      .auto-item .v small{font-size:12px;color:var(--muted);font-weight:600}
+      .auto-item.good{border-color:var(--good)} .auto-item.warn{border-color:var(--warn)} .auto-item.bad{border-color:var(--bad)}
+      .form-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px}
+      .saved-msg{font-size:13px;font-weight:700;color:var(--good)}
+      .btn.primary{background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;padding:10px 20px;font-weight:700;font-size:14px}
+      .btn.line{background:var(--surface);color:var(--bad);border:1px solid var(--line2);border-radius:8px;padding:9px 14px;font-weight:600;font-size:13px}
+      .saved-days{margin-top:16px}
+      .saved-days h3{font-size:13px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:.03em;margin-bottom:8px}
+      .day-list{display:flex;flex-wrap:wrap;gap:7px}
+      .day-list button{border:1px solid var(--line2);background:var(--surface2);border-radius:8px;padding:6px 11px;
+        font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:600;color:var(--ink)}
+      .day-list button.sel{border-color:var(--accent);background:var(--accent-soft)}
+      .day-list .empty-note{font-size:13px;color:var(--muted)}
+
+      /* ---------- tables ---------- */
+      .tbl-wrap{overflow:hidden}
+      table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+      .tbl th{ text-align:right;font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.02em;
+        padding:9px 10px;border-bottom:2px solid var(--line);white-space:nowrap;background:var(--surface2)}
+      .tbl th:first-child,.tbl td:first-child{text-align:left}
+      .tbl td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;font-family:"IBM Plex Mono",monospace;font-size:13px;white-space:nowrap}
+      .tbl td.lbl{font-family:"Archivo",sans-serif;font-weight:600;white-space:normal}
+      .tbl tr.tot td{font-weight:700;border-top:2px solid var(--line2);background:var(--surface2)}
+      .tbl tr.has td{background:transparent}
+      .tbl tr.dim td{color:var(--muted)}
+      .tbl input[type="number"]{width:86px;border:1px solid var(--line2);background:var(--surface2);border-radius:6px;
+        padding:5px 7px;font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:right}
+      .tbl select{border:1px solid var(--line2);background:var(--surface2);border-radius:6px;padding:5px 6px;font-size:12.5px;max-width:128px}
+      .tbl .nm{font-family:"Archivo",sans-serif;font-weight:600;text-align:left;white-space:normal;min-width:130px}
+      .icon-btn{border:1px solid var(--line2);background:var(--surface);color:var(--bad);border-radius:6px;
+        width:28px;height:28px;font-size:15px;line-height:1;padding:0}
+      .sum-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+      .sum-chip{background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:600}
+      .sum-chip b{font-family:"IBM Plex Mono",monospace;font-size:14px}
+      .cap-subtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+      .cap-subtabs button{border:1px solid var(--line2);background:var(--surface);border-radius:8px;padding:7px 14px;font-weight:700;font-size:13px;color:var(--ink2)}
+      .cap-subtabs button.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+      .absence-legend{display:flex;gap:7px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);font-weight:600;margin-bottom:12px}
+      .absence-legend .chip{background:var(--surface3);color:var(--ink2)}
+
+      /* stacked tables on small screens */
+      @media (max-width:820px){
+        table.tbl.stack thead{display:none}
+        table.tbl.stack, table.tbl.stack tbody, table.tbl.stack tr, table.tbl.stack td{display:block;width:100%}
+        table.tbl.stack tr{border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;padding:6px 4px;background:var(--surface)}
+        table.tbl.stack td{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px dashed var(--line);
+          text-align:right;padding:7px 10px;white-space:normal}
+        table.tbl.stack td:last-child{border-bottom:none}
+        table.tbl.stack td::before{content:attr(data-l);font-family:"Archivo",sans-serif;font-size:12px;font-weight:700;color:var(--muted);text-align:left}
+        table.tbl.stack td.lbl, table.tbl.stack td.nm{font-size:14.5px}
+        table.tbl.stack tr.tot td{background:transparent}
+        .tbl-scroll{overflow-x:auto}
+      }
+      @media (min-width:821px){ .tbl-scroll{overflow-x:auto} }
+
+      /* ---------- footer ---------- */
+      footer{border-top:1px solid var(--line);background:var(--surface);margin-top:8px}
+      .foot-in{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;
+        font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden}
+      .foot-in b{color:var(--ink2)}
+      .foot-in span{overflow:hidden;text-overflow:ellipsis}
+      @media (max-width:560px){ .foot-in{font-size:10.5px;gap:6px} .brand .sub{display:none} }
+
+      .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--navy);color:var(--navy-ink);
+        padding:11px 18px;border-radius:10px;font-weight:700;font-size:13.5px;opacity:0;pointer-events:none;transition:all .25s;z-index:60;box-shadow:var(--shadow);max-width:92vw;text-align:center}
+      .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+      @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="wrap topbar-in">
+        <div class="brand">
+          <h1>Kitting Dashboard</h1>
+          <span class="yr">2027</span>
+          <span class="sub">Shift · MMC · CLE · Weekend · Support</span>
+        </div>
+        <div class="top-actions">
+          <button class="btn" id="btnSample" type="button">Load sample day</button>
+          <button class="btn ghost" id="btnClearSample" type="button" hidden>Clear sample data</button>
+          <button class="btn danger-ghost" id="btnWipe" type="button">Clear all entries</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="demo-note" role="note">
+      <div class="wrap"><span class="dot"></span><span>Demo — entries save in this browser only, nothing is sent anywhere. Sample figures are labelled “Sample” and are not the client’s real data.</span></div>
+    </div>
+
+    <nav class="tabs" aria-label="Dashboard sections">
+      <div class="wrap tabs-in" id="tabs"></div>
+    </nav>
+
+    <main class="wrap" id="main"></main>
+
+    <footer>
+      <div class="wrap foot-in">
+        <span><b>Kitting Dashboard</b> · 2027</span>
+        <span>Demo — saves in this browser only</span>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+    "use strict";
+    /* =====================================================================
+       Kitting Dashboard — built from the client's 2027 Kitting Dashboard
+       workbook (12 sheets). The workbook's 2027 figures are blank, so the
+       app starts blank. Entries persist in this browser only (localStorage).
+       ===================================================================== */
+
+    /* ---------------- real history from the workbook Data Sheet ----------------
+       Monthly picks. Blank in the file = null here (shown as —).
+       The file's Diff / % / far-right total columns are intentionally not used. */
+    var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    var MONTHS_S = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    var HISTORY = {
+      "2023": [null,null,null,null,null,null,null,76762,63810,76380,74532,57771],
+      "2024": [67747,64443,58095,60604,51297,59895,73605,72998,62483,81737,76165,61211],
+      "2025": [72749,76756,68802,53628,62998,70786,69171,42068,64310,62517,66250,54425]
+    };
+
+    /* ---------------- targets, exactly as written in the workbook ---------------- */
+    var TARGETS = {
+      shift:  { lph:15, lphp:116 },
+      mmc:    { pick:41, putaway:90, audit:60, beAudit:140 },
+      cle:    { pick:61, putaway:130, build:37 },
+      weekendMmc: { pick:41, putaway:80, beAudit:70 },
+      weekendCle: { pick:61, putaway:130, build:37 },
+      support:{ pi:20, shipping:70, confirming:70, vendor:10, ltl:180, putaway:30, eola:25, dayPicks:18 }
+    };
+
+    /* ---------------- rosters from the capacity-plan sheets ---------------- */
+    var ROSTERS = {
+      mmc: { label:"MMC Capacity Plan", people:["Department Manager","Controller","Airidas Firantas","Aurelian Ociepa","Adam Thompson","Ben Overton","David Foster","Karl Spoors","Lena Anthony","Lennon Higgins","Leo Persico","Mike Parker","Renars Prikuls","Rebecca Richardson","Steve Ginns","Victoria Lambert","Wil Doyle"],
+             acts:[["pick","Pick (CAP)"],["putaway","Putaway (CAP)"],["audit","MMC Audit (CAP)"],["beAudit","BE Audit (CAP)"],["shipping","Shipping (CAP)"]] },
+      cle: { label:"CLE Capacity Plan", people:["Department Manager","Controller","Adam Brailsford","Marta Ostrowska","Adam Licence","Adebayo Adedeji","Marie Sivakova","Sharon Anthony","Zofia Sury","Leif Smith","Dawn Cox","Sandra Milner","Hayley Shaw","Janine Garside","Iwona Drozdowska","Elena","Lorna Cole","Rebecca Hardy","Johnathan Cartledge"],
+             acts:[["config","Config"],["pick","Pick (CAP)"],["putaway","Putaway (CAP)"],["build","Build (CAP)"],["shipping","Shipping (CAP)"],["confRet","Config / Returns Members"]] },
+      weekend: { label:"Weekend Capacity Plan", people:["Department Manager","Pam MCcarthy","Stefan Marici","Masha Larina","Gabby Wilan","OT 1","OT 2","OT 3","OT 4","OT 5"],
+             acts:[["kpik","KPIK (CAP)"],["putaway","Putaway (CAP)"],["build","Build (CAP)"],["shipping","Shipping (CAP)"]] }
+    };
+    var ABSENCES = ["", "Holiday", "Sick", "Care of Dependant", "Funeral"];
+
+    /* ---------------- storage ---------------- */
+    var LS_KEY = "kittingDashboard.v1";
+    function blankDB(){ return { shift:{}, mmc:{}, cle:{}, weekend:{}, support:{}, errors:[], cycle:{}, cap:{ mmc:{}, cle:{}, weekend:{} } }; }
+    function loadDB(){
+      try{ var raw = localStorage.getItem(LS_KEY); if(!raw) return blankDB();
+        var d = JSON.parse(raw); var b = blankDB();
+        for(var k in b){ if(d[k] !== undefined) b[k] = d[k]; }
+        return b;
+      }catch(e){ return blankDB(); }
+    }
+    var DB = loadDB();
+    function persist(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(DB)); }catch(e){} }
+
+    /* ---------------- helpers ---------------- */
+    function $(s, r){ return (r||document).querySelector(s); }
+    function $$(s, r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+    function num(v){ var n = parseFloat(v); return isFinite(n) ? n : 0; }
+    function fmt(n, dec){ if(n === null || n === undefined || isNaN(n)) return "—";
+      return Number(n).toLocaleString("en-GB",{minimumFractionDigits:dec||0, maximumFractionDigits:dec||0}); }
+    function fmt1(n){ if(n === null || n === undefined || isNaN(n) || !isFinite(n)) return "—";
+      return Number(n).toLocaleString("en-GB",{minimumFractionDigits:0, maximumFractionDigits:1}); }
+    function money(n){ if(!n) return "—"; return "£" + fmt(n); }
+    function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+    function parseD(iso){ var p = iso.split("-"); return new Date(Date.UTC(+p[0], +p[1]-1, +p[2])); }
+    function toISO(d){ return d.toISOString().slice(0,10); }
+    function addDays(iso, n){ var d = parseD(iso); d.setUTCDate(d.getUTCDate()+n); return toISO(d); }
+    var DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    function dayName(iso){ return DAYS[parseD(iso).getUTCDay()]; }
+    function prettyDate(iso){ var d = parseD(iso); return d.getUTCDate() + " " + MONTHS_S[d.getUTCMonth()] + " " + d.getUTCFullYear(); }
+    function toast(msg){ var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+      clearTimeout(t._h); t._h = setTimeout(function(){ t.classList.remove("show"); }, 2600); }
+    function kpiOf(lines, hrs){ if(!hrs) return null; return lines / hrs; }
+    function kpiClass(v, target){ if(v === null || v === undefined || !isFinite(v)) return "none";
+      var p = v / target; return p >= 1 ? "good" : (p >= 0.9 ? "warn" : "bad"); }
+    function kpiPill(v, target){ var c = kpiClass(v, target);
+      if(c === "none") return '<span class="pill none">no hours</span>';
+      var pct = Math.round(v / target * 100);
+      return '<span class="pill ' + c + '">' + pct + '% of target</span>'; }
+    var DEFAULT_DATE = "2027-01-04"; /* a Monday in the workbook year */
+
+    /* =====================================================================
+       FORM SCHEMAS — fields mirror the workbook columns.
+       type n = number input, t = text, ta = textarea, sel = select
+       kpis: [id, label, target] -> creates <id>Lines + <id>Hrs inputs
+       ===================================================================== */
+    function N(id, label){ return {id:id, label:label, type:"n"}; }
+    var SCHEMAS = {
+      shift: { tab:"shift", title:"Shift — Daily Entry", sheet:"Workbook sheet: Shift Daily",
+        groups:[
+          {h:"Output", fields:[N("picks","Picks"), N("kitsBuilt","Kits built"), N("shippedKits","Shipped kits"), N("handoverLines","Handover lines"), N("piCount","PI count")]},
+          {h:"Hours", fields:[N("holidayHrs","Holiday hrs"), N("sicknessHrs","Sickness hrs"), N("workedHours","Worked hours"), N("hoursDeployed","Hours deployed"), N("lostTimeHrs","Lost time (hrs)"), N("overtime","Overtime")]},
+          {h:"Lines & value", fields:[N("shippedLines","Shipped lines"), N("processedLines","Processed lines"), N("value","Value (£)"), N("fullShiftCapacity","Full shift capacity")]},
+          {h:"Support hours", note:"If a Support entry exists for this date, these are filled from it automatically.", fields:[N("supDays","Total support hours — Days"), N("supSpon","Total support hours — Spondon")]},
+          {h:"Comments", wide:true, fields:[{id:"comments", label:"Comments", type:"ta"}]}
+        ], kpis:[] },
+      mmc: { tab:"mmc", title:"MMC — Daily Entry", sheet:"Workbook sheet: MMC Daily",
+        groups:[
+          {h:"Daily", fields:[N("picks","MMC Picks"), N("kitsBuilt","MMC kits built"), N("shipped","MMC Shipped"), N("kanban","Kanban Fill %"), N("sicknessHrs","Sickness hours"), N("holidayHrs","Holiday hours"), N("workedHours","Worked hours")]},
+          {h:"Other hours", fields:[N("shippingHrs","Shipping (hours)"), N("cleSupport","CLE Support (hours)"), N("handoverLines","Handover (lines)"), N("handoverUncHrs","Handover & Unconsumed (hours)"), N("fiveSHrs","5S & Media Replen (hours)"), N("drivingHrs","Driving (hours)"), N("trainingHrs","Training (hours)"), N("briefsHrs","Briefs & Meetings (hours)")]},
+          {h:"Comments", wide:true, fields:[{id:"comments", label:"Comments", type:"ta"}]}
+        ],
+        kpis:[["pick","Pick",41],["putaway","Putaway",90],["audit","MMC Audit",60],["beAudit","Back-end Audit",140]], kpiTitle:"KPI — lines per hour vs target" },
+      cle: { tab:"cle", title:"CLE — Daily Entry", sheet:"Workbook sheet: CLE Daily",
+        groups:[
+          {h:"Daily", fields:[N("picks","CLE Picks"), N("buildLines","CLE Build lines"), N("sicknessHrs","Sickness / hrs"), N("holidayHrs","Holiday / hrs"), N("workedHours","Worked hours")]},
+          {h:"Other hours", fields:[N("shippingHrs","Shipping hours"), N("fiveSHrs","5S & Media Replen (hours)"), N("drivingHrs","Driving (hours)"), N("trainingHrs","Training (hours)"), N("briefsHrs","Briefs & Meetings (hours)"), N("configHrs","Config (hours)")]},
+          {h:"Call Off", fields:[N("coParents","Kit parents on call off"), N("coNonGolden","Non golden"), N("coBoxesCompleted","Kit boxes completed"), N("coBoxesShipped","Kit boxes shipped against call off"), N("coParentsFailed","Parents failed"), {id:"coReasons", label:"Reasons for failure", type:"t"}]}
+        ],
+        kpis:[["pick","Pick",61],["putaway","Putaway",130],["buildK","Build",37]], kpiTitle:"KPI — lines per hour vs target" },
+      weekend: { tab:"weekend", title:"Weekend Shift — Daily Entry", sheet:"Workbook sheet: Weekend Shift",
+        groups:[
+          {h:"MMC", fields:[N("mmcPicks","MMC Picks"), N("mmcBuilt","MMC Built kits"), N("mmcShipped","MMC Shipped")]},
+          {h:"CLE", fields:[N("clePicks","CLE Picks"), N("cleBuilt","CLE Kits Built"), N("cleBuildLines","CLE Build lines"), N("cleShipped","CLE Shipped")]},
+          {h:"Shift", fields:[N("handoverLines","Handover lines"), N("sicknessHrs","Sickness / hrs"), N("holidayHrs","Holiday / hrs"), N("workedHours","Worked hours"), N("overtime","Overtime")]},
+          {h:"Other hours", fields:[N("shippingHrs","Shipping hours"), N("fiveSHrs","5S & Media Replen (hours)"), N("drivingHrs","Driving (hours)"), N("trainingHrs","Training (hours)"), N("briefsHrs","Briefs & Meetings (hours)")]},
+          {h:"Comments", wide:true, fields:[{id:"comments", label:"Comments", type:"ta"}]}
+        ],
+        kpis:[["mmcPick","MMC Pick",41],["mmcPutaway","MMC Putaway",80],["mmcBeAudit","MMC Back-end Audit",70],["clePick","CLE Pick",61],["clePutaway","CLE Putaway",130],["cleBuildK","CLE Build",37]], kpiTitle:"KPI — lines per hour vs target (weekend MMC Putaway target is 80)" },
+      support: { tab:"support", title:"Support — Daily Entry", sheet:"Workbook sheet: Support",
+        groups:[
+          {h:"Spondon", fields:[N("sponDayPicks","Day picks (lines)"), N("sponKitPicks","Kit picks (lines)"), N("sponPutaway","Putaway (lines)"), N("sponPi","PI count (lines)"), N("sponTotalHours","Spondon total hours")]}
+        ],
+        kpis:[["pi","PI",20],["shipping","Shipping",70],["confirming","Confirming",70],["vendor","Vendor",10],["ltl","LTL",180],["putaway","Putaway",30],["eola","EOLA",25],["dayPicks","Day Picks",18]], kpiTitle:"Days Support — lines + hours, KPI auto vs target" }
+    };
+
+    /* auto-calculated readouts per tab: [label, fn(entry)->{v, sub, cls}] */
+    function shiftAutos(e){
+      var lph = kpiOf(num(e.shippedLines), num(e.workedHours));
+      var lphp = kpiOf(num(e.processedLines), num(e.workedHours));
+      var base = num(e.hoursDeployed) || num(e.workedHours);
+      var lostPct = base ? (num(e.lostTimeHrs) / base * 100) : null;
+      return [
+        {lb:"LPH — auto (target 15)", v:fmt1(lph), sub:"shipped lines ÷ worked hours", cls:kpiClass(lph,15)},
+        {lb:"LPHP — auto (target 116)", v:fmt1(lphp), sub:"processed lines ÷ worked hours", cls:kpiClass(lphp,116)},
+        {lb:"Lost time % — auto", v:(lostPct===null?"—":fmt1(lostPct)+"%"), sub:"lost time ÷ hours deployed", cls:""}
+      ];
+    }
+    function sumKpiHrs(e, schema){ var s=0; schema.kpis.forEach(function(k){ s += num(e[k[0]+"Hrs"]); }); return s; }
+    function mmcAutos(e){
+      var t = sumKpiHrs(e, SCHEMAS.mmc) + num(e.shippingHrs) + num(e.cleSupport) + num(e.handoverUncHrs) + num(e.fiveSHrs) + num(e.drivingHrs) + num(e.trainingHrs) + num(e.briefsHrs);
+      return [{lb:"Total hours — auto", v:fmt1(t), sub:"all activity hours added up", cls:""}];
+    }
+    function cleAutos(e){
+      var t = sumKpiHrs(e, SCHEMAS.cle) + num(e.shippingHrs) + num(e.fiveSHrs) + num(e.drivingHrs) + num(e.trainingHrs) + num(e.briefsHrs) + num(e.configHrs);
+      var perf = num(e.coParents) ? (num(e.coBoxesShipped) / num(e.coParents) * 100) : null;
+      return [
+        {lb:"Total hours — auto", v:fmt1(t), sub:"all activity hours added up", cls:""},
+        {lb:"Call Off % Performance — auto", v:(perf===null?"—":fmt1(perf)+"%"), sub:"boxes shipped ÷ kit parents on call off", cls: perf===null?"":(perf>=95?"good":(perf>=85?"warn":"bad"))}
+      ];
+    }
+    function weekendAutos(e){
+      var t = sumKpiHrs(e, SCHEMAS.weekend) + num(e.shippingHrs) + num(e.fiveSHrs) + num(e.drivingHrs) + num(e.trainingHrs) + num(e.briefsHrs);
+      return [{lb:"Total hours — auto", v:fmt1(t), sub:"all activity hours added up", cls:""}];
+    }
+    function supportAutos(e){
+      var t = sumKpiHrs(e, SCHEMAS.support);
+      return [{lb:"Days Support total hours — auto", v:fmt1(t), sub:"sum of the eight activity hours", cls:""}];
+    }
+    var AUTOS = { shift:shiftAutos, mmc:mmcAutos, cle:cleAutos, weekend:weekendAutos, support:supportAutos };
+    function supportTotals(iso){ var e = DB.support[iso]; if(!e) return null;
+      return { days: sumKpiHrs(e, SCHEMAS.support), spon: num(e.sponTotalHours), dayPickLines: num(e.dayPicksLines) }; }
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   UI — tabs, panels, entry forms
+   ===================================================================== */
+var TABS = [
+  ["dashboard","Dashboard"],["shift","Shift"],["mmc","MMC"],["cle","CLE"],["weekend","Weekend"],
+  ["support","Support"],["weekly","Weekly"],["monthly","Monthly"],["capacity","Capacity Plans"],
+  ["errors","Error Log"],["history","History"]
+];
+var state = { tab:"dashboard", dashDate:DEFAULT_DATE,
+  dates:{ shift:DEFAULT_DATE, mmc:DEFAULT_DATE, cle:DEFAULT_DATE, weekend:DEFAULT_DATE, support:DEFAULT_DATE },
+  capPlan:"mmc", capDate:DEFAULT_DATE };
+
+function buildTabs(){
+  var nav = document.getElementById("tabs");
+  nav.innerHTML = TABS.map(function(t){
+    var cnt = "";
+    if(t[0]==="errors" && DB.errors.length) cnt = '<span class="cnt">'+DB.errors.length+"</span>";
+    return '<button type="button" class="tabbtn" data-tab="'+t[0]+'">'+t[1]+cnt+"</button>";
+  }).join("");
+  $$(".tabbtn", nav).forEach(function(b){ b.addEventListener("click", function(){ showTab(b.getAttribute("data-tab")); }); });
+}
+function showTab(id){
+  state.tab = id;
+  $$(".tabbtn").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-tab")===id); });
+  $$(".panel").forEach(function(p){ p.classList.toggle("active", p.getAttribute("data-panel")===id); });
+  if(id==="dashboard") renderDashboard();
+  if(id==="weekly") renderWeekly();
+  if(id==="monthly") renderMonthly();
+  if(id==="capacity") renderCapacity();
+  if(id==="errors") renderErrors();
+  if(id==="history") renderHistory();
+}
+
+/* ---------------- entry form construction ---------------- */
+function fieldHTML(f){
+  if(f.type==="ta") return '<div class="fld"><label for="f_'+f.id+'">'+f.label+'</label><textarea id="f_'+f.id+'" data-field="'+f.id+'" placeholder=""></textarea></div>';
+  if(f.type==="t") return '<div class="fld"><label for="f_'+f.id+'">'+f.label+'</label><input type="text" id="f_'+f.id+'" data-field="'+f.id+'"></div>';
+  return '<div class="fld"><label for="f_'+f.id+'">'+f.label+'</label><input type="number" inputmode="decimal" step="any" min="0" id="f_'+f.id+'" data-field="'+f.id+'" placeholder="0"></div>';
+}
+function buildEntryPanel(schema){
+  var sec = document.createElement("section");
+  sec.className = "panel"; sec.setAttribute("data-panel", schema.tab);
+  var h = '<div class="card pad"><div class="panel-head"><div><h2>'+schema.title+'</h2><div class="sheet">'+schema.sheet+'</div></div>' +
+    '<div class="date-ctl"><label>Date <input type="date" class="entry-date" min="2027-01-01" max="2027-12-31" value="'+state.dates[schema.tab]+'"></label>' +
+    '<span class="day-name"></span><span class="chip sample sample-flag" hidden>Sample data</span><span class="chip none empty-flag">No entry yet</span></div></div>';
+  schema.groups.forEach(function(g){
+    h += '<div class="fgroup"><h3>'+g.h+'</h3><div class="fgrid'+(g.wide?" wide":"")+'">' + g.fields.map(fieldHTML).join("") + "</div>" +
+      (g.note ? '<div class="note">'+g.note+"</div>" : "") + "</div>";
+  });
+  if(schema.kpis.length){
+    h += '<div class="fgroup"><h3>'+schema.kpiTitle+'</h3><div class="kpigroups">' + schema.kpis.map(function(k){
+      return '<div class="kpig" data-kpi="'+k[0]+'"><h4>'+k[1]+' <span class="tgt">target '+k[2]+' / hr</span></h4>' +
+        '<div class="row"><div class="fld"><label>Lines</label><input type="number" inputmode="decimal" step="any" min="0" data-field="'+k[0]+'Lines" placeholder="0"></div>' +
+        '<div class="fld"><label>Hours</label><input type="number" inputmode="decimal" step="any" min="0" data-field="'+k[0]+'Hrs" placeholder="0"></div></div>' +
+        '<div class="kpi-out">KPI <span class="val mono">—</span> <span class="pillslot"></span></div></div>';
+    }).join("") + "</div></div>";
+  }
+  h += '<div class="auto-panel autos"></div>';
+  h += '<div class="form-actions"><button type="button" class="btn primary save-btn">Save entry</button>' +
+    '<button type="button" class="btn line delete-btn">Delete this day</button><span class="saved-msg" role="status"></span></div>';
+  h += '<div class="saved-days"><h3>Saved days</h3><div class="day-list"></div></div></div>';
+  sec.innerHTML = h;
+  document.getElementById("main").appendChild(sec);
+  wireEntryPanel(sec, schema);
+  loadEntryIntoForm(sec, schema);
+}
+function collectForm(sec){
+  var e = {};
+  $$("[data-field]", sec).forEach(function(inp){
+    var id = inp.getAttribute("data-field");
+    e[id] = (inp.type==="number") ? (inp.value==="" ? "" : num(inp.value)) : inp.value;
+  });
+  return e;
+}
+function fillForm(sec, e){
+  $$("[data-field]", sec).forEach(function(inp){
+    var id = inp.getAttribute("data-field");
+    inp.value = (e && e[id] !== undefined && e[id] !== null) ? e[id] : "";
+  });
+}
+function recalcPanel(sec, schema){
+  var e = collectForm(sec);
+  schema.kpis.forEach(function(k){
+    var box = $('.kpig[data-kpi="'+k[0]+'"]', sec); if(!box) return;
+    var v = kpiOf(num(e[k[0]+"Lines"]), num(e[k[0]+"Hrs"]));
+    $(".val", box).textContent = (v===null ? "—" : fmt1(v));
+    $(".pillslot", box).innerHTML = kpiPill(v, k[2]);
+  });
+  var autos = AUTOS[schema.tab](e);
+  $(".autos", sec).innerHTML = autos.map(function(a){
+    return '<div class="auto-item '+(a.cls||"")+'"><div class="lb">'+a.lb+'</div><div class="v">'+a.v+' <small>'+a.sub+'</small></div></div>';
+  }).join("");
+}
+function loadEntryIntoForm(sec, schema){
+  var iso = state.dates[schema.tab];
+  var e = DB[schema.tab][iso];
+  $(".day-name", sec).textContent = dayName(iso) + " · " + prettyDate(iso);
+  if(schema.tab==="shift" && !e){
+    var st = supportTotals(iso);
+    fillForm(sec, st ? { supDays: st.days, supSpon: st.spon } : {});
+  } else fillForm(sec, e || {});
+  if(schema.tab==="shift" && e){
+    var st2 = supportTotals(iso);
+    if(st2){ var f1=$('[data-field="supDays"]',sec), f2=$('[data-field="supSpon"]',sec);
+      if(f1) f1.value = st2.days; if(f2) f2.value = st2.spon; }
+  }
+  $(".sample-flag", sec).hidden = !(e && e._sample);
+  $(".empty-flag", sec).hidden = !!e;
+  $(".empty-flag", sec).textContent = e ? "" : "No entry yet for this date";
+  var dl = $(".day-list", sec);
+  var dates = Object.keys(DB[schema.tab]).sort();
+  dl.innerHTML = dates.length ? dates.map(function(d){
+    var en = DB[schema.tab][d];
+    return '<button type="button" data-goto="'+d+'" class="'+(d===iso?"sel":"")+'">'+prettyDate(d)+(en._sample?" · Sample":"")+"</button>";
+  }).join("") : '<span class="empty-note">Nothing saved yet — the workbook’s 2027 figures start blank.</span>';
+  $$("[data-goto]", dl).forEach(function(b){ b.addEventListener("click", function(){
+    state.dates[schema.tab] = b.getAttribute("data-goto");
+    $(".entry-date", sec).value = state.dates[schema.tab];
+    loadEntryIntoForm(sec, schema); recalcPanel(sec, schema);
+  }); });
+  recalcPanel(sec, schema);
+}
+function wireEntryPanel(sec, schema){
+  $(".entry-date", sec).addEventListener("change", function(ev){
+    state.dates[schema.tab] = ev.target.value || DEFAULT_DATE;
+    loadEntryIntoForm(sec, schema);
+  });
+  sec.addEventListener("input", function(){ recalcPanel(sec, schema); });
+  $(".save-btn", sec).addEventListener("click", function(){
+    var iso = state.dates[schema.tab];
+    var e = collectForm(sec);
+    var prev = DB[schema.tab][iso];
+    if(prev && prev._sample) e._sample = true;
+    DB[schema.tab][iso] = e; persist();
+    $(".saved-msg", sec).textContent = "Saved · " + prettyDate(iso);
+    toast(schema.title.split(" — ")[0] + " entry saved for " + prettyDate(iso));
+    loadEntryIntoForm(sec, schema); buildTabs(); markActiveTab();
+  });
+  $(".delete-btn", sec).addEventListener("click", function(){
+    var iso = state.dates[schema.tab];
+    if(DB[schema.tab][iso]){ delete DB[schema.tab][iso]; persist(); toast("Entry deleted for " + prettyDate(iso)); }
+    loadEntryIntoForm(sec, schema); buildTabs(); markActiveTab(); refreshSampleButtons();
+  });
+}
+function markActiveTab(){ $$(".tabbtn").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-tab")===state.tab); }); }
+
+/* ---------------- dashboard ---------------- */
+function dashCard(lb, v, sub, cls, empty){
+  return '<div class="kpi '+(cls||"")+(empty?" empty":"")+'"><div class="lb">'+lb+'</div><div class="v">'+v+'</div>'+(sub?'<div class="vs">'+sub+"</div>":"")+"</div>";
+}
+function historyChartSVG(height){
+  var years = ["2023","2024","2025"], colors = {"2023":"var(--y2023)","2024":"var(--y2024)","2025":"var(--y2025)"};
+  var W = 720, H = height || 240, padL = 46, padB = 26, padT = 10;
+  var max = 90000, iw = W - padL - 8, ih = H - padB - padT;
+  var s = '<svg viewBox="0 0 '+W+" "+H+'" role="img" aria-label="Monthly picks history chart">';
+  for(var g=0; g<=3; g++){ var yv = max*g/3, y = padT + ih - ih*g/3;
+    s += '<line x1="'+padL+'" y1="'+y+'" x2="'+(W-8)+'" y2="'+y+'" stroke="var(--line)" stroke-width="1"/>' +
+         '<text x="'+(padL-6)+'" y="'+(y+4)+'" text-anchor="end" font-size="10.5" fill="var(--muted)">'+(yv===0?"0":(yv/1000)+"k")+"</text>"; }
+  var gw = iw/12, bw = Math.min(13, gw/4);
+  for(var m=0; m<12; m++){
+    years.forEach(function(yr, i){
+      var v = HISTORY[yr][m]; if(v===null) return;
+      var bh = ih * v / max, x = padL + m*gw + gw/2 + (i-1)*(bw+2) - bw/2, y2 = padT + ih - bh;
+      s += '<rect x="'+x.toFixed(1)+'" y="'+y2.toFixed(1)+'" width="'+bw+'" height="'+bh.toFixed(1)+'" rx="2" fill="'+colors[yr]+'"><title>'+MONTHS[m]+" "+yr+": "+fmt(v)+" picks</title></rect>";
+    });
+    s += '<text x="'+(padL + m*gw + gw/2)+'" y="'+(H-8)+'" text-anchor="middle" font-size="10.5" fill="var(--muted)">'+MONTHS_S[m]+"</text>";
+  }
+  return s + "</svg>";
+}
+function historyLegend(){
+  return '<div class="legend"><span><span class="sw" style="background:var(--y2023)"></span>2023</span>' +
+    '<span><span class="sw" style="background:var(--y2024)"></span>2024</span>' +
+    '<span><span class="sw" style="background:var(--y2025)"></span>2025</span>' +
+    '<span style="color:var(--muted)">Monthly picks · from the workbook Data Sheet</span></div>';
+}
+function renderDashboard(){
+  var sec = $('[data-panel="dashboard"]'); if(!sec) return;
+  var iso = state.dashDate;
+  var e = DB.shift[iso] || {};
+  var has = !!DB.shift[iso];
+  var st = supportTotals(iso);
+  var supDays = st ? st.days : num(e.supDays), supSpon = st ? st.spon : num(e.supSpon);
+  var lph = kpiOf(num(e.shippedLines), num(e.workedHours));
+  var lphp = kpiOf(num(e.processedLines), num(e.workedHours));
+  var base = num(e.hoursDeployed) || num(e.workedHours);
+  var lostPct = base ? num(e.lostTimeHrs)/base*100 : null;
+  var dash = function(v){ return has ? v : "—"; };
+  var cards =
+    dashCard("Picks", dash(fmt(num(e.picks))), "", "", !has) +
+    dashCard("Kits built", dash(fmt(num(e.kitsBuilt))), "", "", !has) +
+    dashCard("Shipped kits", dash(fmt(num(e.shippedKits))), "", "", !has) +
+    dashCard("Handover lines", dash(fmt(num(e.handoverLines))), "", "", !has) +
+    dashCard("PI count", dash(fmt(num(e.piCount))), "", "", !has) +
+    dashCard("Worked hours", dash(fmt1(num(e.workedHours))), "", "", !has) +
+    dashCard("LPH", dash(fmt1(lph)), "target <b>15</b> · shipped lines ÷ worked hrs", has ? kpiClass(lph,15) : "", !has) +
+    dashCard("LPHP", dash(fmt1(lphp)), "target <b>116</b> · processed lines ÷ worked hrs", has ? kpiClass(lphp,116) : "", !has) +
+    dashCard("Value", dash(money(num(e.value))), "", "", !has) +
+    dashCard("Lost time", dash(lostPct===null?"—":fmt1(lostPct)+"%"), has ? (fmt1(num(e.lostTimeHrs))+" hrs lost of "+fmt1(base)+" deployed") : "", "", !has) +
+    dashCard("Overtime", dash(fmt1(num(e.overtime))), "hours", "", !has) +
+    dashCard("Support hours", (has || st) ? fmt1(supDays + supSpon) : "—", (has || st) ? "Days "+fmt1(supDays)+" · Spondon "+fmt1(supSpon) : "", "", !has && !st);
+  function statusCard(name, entry, figs){
+    return '<div class="card status-card"><h3>'+name+
+      (entry ? (entry._sample ? ' <span class="chip sample">Sample</span>' : ' <span class="chip ok">Entered</span>') : ' <span class="chip none">No entry</span>') +
+      '</h3><div class="fig">'+(entry ? figs : "Nothing recorded for this date yet.")+"</div></div>";
+  }
+  var m = DB.mmc[iso], c = DB.cle[iso], w = DB.weekend[iso], sp = DB.support[iso];
+  var mmcTot = m ? sumKpiHrs(m, SCHEMAS.mmc) + num(m.shippingHrs) + num(m.cleSupport) + num(m.handoverUncHrs) + num(m.fiveSHrs) + num(m.drivingHrs) + num(m.trainingHrs) + num(m.briefsHrs) : 0;
+  var status =
+    statusCard("MMC", m, m ? "Picks "+fmt(num(m.picks))+" · Built "+fmt(num(m.kitsBuilt))+" · Shipped "+fmt(num(m.shipped))+"<br>Kanban fill "+(m.kanban===""||m.kanban===null||m.kanban===undefined?"—":fmt1(num(m.kanban))+"%")+" · Total hours "+fmt1(mmcTot) : "") +
+    statusCard("CLE", c, c ? "Picks "+fmt(num(c.picks))+" · Build lines "+fmt(num(c.buildLines))+"<br>Call Off performance "+(num(c.coParents)? fmt1(num(c.coBoxesShipped)/num(c.coParents)*100)+"%":"—") : "") +
+    statusCard("Weekend Shift", w, w ? "MMC shipped "+fmt(num(w.mmcShipped))+" · CLE shipped "+fmt(num(w.cleShipped))+"<br>Worked "+fmt1(num(w.workedHours))+" hrs · Overtime "+fmt1(num(w.overtime))+" hrs" : "") +
+    statusCard("Support", sp, sp ? "Days total "+fmt1(sumKpiHrs(sp, SCHEMAS.support))+" hrs · Spondon "+fmt1(num(sp.sponTotalHours))+" hrs<br>Day pick lines "+fmt(num(sp.dayPicksLines)) : "");
+  var targets =
+    '<table class="tbl"><thead><tr><th style="text-align:left">Area</th><th style="text-align:left">Measure</th><th>Target</th></tr></thead><tbody>' +
+    [["Shift","LPH (lines per hour)",15],["Shift","LPHP (lines per hour)",116],
+     ["MMC","Pick",41],["MMC","Putaway",90],["MMC","MMC Audit",60],["MMC","Back-end Audit",140],
+     ["CLE","Pick",61],["CLE","Putaway",130],["CLE","Build",37],
+     ["Weekend MMC","Pick",41],["Weekend MMC","Putaway",80],["Weekend MMC","Back-end Audit",70],
+     ["Weekend CLE","Pick",61],["Weekend CLE","Putaway",130],["Weekend CLE","Build",37],
+     ["Support — Days","PI",20],["Support — Days","Shipping",70],["Support — Days","Confirming",70],["Support — Days","Vendor",10],
+     ["Support — Days","LTL",180],["Support — Days","Putaway",30],["Support — Days","EOLA",25],["Support — Days","Day Picks",18]
+    ].map(function(r){ return '<tr><td class="lbl">'+r[0]+'</td><td class="lbl">'+r[1]+'</td><td>'+r[2]+"</td></tr>"; }).join("") + "</tbody></table>";
+  sec.innerHTML =
+    '<div class="panel-head"><div><h2>Dashboard</h2><div class="sheet">Shift figures for the selected day · KPIs calculated automatically</div></div>' +
+    '<div class="date-ctl"><label>Date <input type="date" id="dashDate" min="2027-01-01" max="2027-12-31" value="'+iso+'"></label>' +
+    '<span class="day-name">'+dayName(iso)+" · "+prettyDate(iso)+'</span>' +
+    (has && e._sample ? '<span class="chip sample">Sample data</span>' : "") +
+    (has ? "" : '<span class="chip none">No Shift entry for this date</span>') + "</div></div>" +
+    '<div class="kpi-grid">'+cards+"</div>" +
+    '<div class="day-status">'+status+"</div>" +
+    '<div class="dash-cols"><div class="card pad"><div class="sec-title">Picks history</div><div class="sec-sub">Real monthly figures from the workbook’s Data Sheet — the only history the file holds.</div>' +
+    historyLegend() + '<div class="chart-box">'+historyChartSVG(230)+"</div></div>" +
+    '<div class="card pad"><div class="sec-title">Targets reference</div><div class="sec-sub">Targets exactly as written in the workbook.</div><div class="tbl-wrap">'+targets+"</div></div></div>";
+  $("#dashDate", sec).addEventListener("change", function(ev){ state.dashDate = ev.target.value || DEFAULT_DATE; renderDashboard(); });
+}
+</script>
+<script>
+"use strict";
+/* =====================================================================
+   Weekly & Monthly rollups — auto-summed from saved Shift entries.
+   Support hours come from the Support entry for a date when one exists
+   (that is the source sheet in the workbook), otherwise from the Shift
+   entry's own support fields.
+   ===================================================================== */
+var ROLL_FIELDS = [["picks","Picks"],["kitsBuilt","Kits built"],["shippedKits","Shipped"],["handoverLines","Handover lines"],["piCount","PI count"],["sicknessHrs","Sickness hrs"],["holidayHrs","Holiday hrs"],["workedHours","Worked hrs"],["processedLines","Lines processed"],["shippedLines","Shipped lines"],["value","Value £"],["lostTimeHrs","Lost time hrs"]];
+function emptyRoll(){ var o = { supDays:0, supSpon:0, overtime:0, dayPickLines:0, days:0, sample:false };
+  ROLL_FIELDS.forEach(function(f){ o[f[0]] = 0; }); return o; }
+function addShiftToRoll(o, iso){
+  var e = DB.shift[iso]; if(!e) return;
+  ROLL_FIELDS.forEach(function(f){ o[f[0]] += num(e[f[0]]); });
+  o.overtime += num(e.overtime); o.days += 1; if(e._sample) o.sample = true;
+  var st = supportTotals(iso);
+  if(st){ o.supDays += st.days; o.supSpon += st.spon; o.dayPickLines += st.dayPickLines; if(DB.support[iso]._sample) o.sample = true; }
+  else { o.supDays += num(e.supDays); o.supSpon += num(e.supSpon); }
+}
+function weekOfYear(iso){ var diff = Math.floor((parseD(iso) - parseD("2027-01-01")) / 86400000); return Math.floor(diff/7) + 1; }
+function rollRowCells(o, extra){
+  var cells = ROLL_FIELDS.map(function(f){
+    var v = o[f[0]];
+    return "<td data-l=\""+f[1]+"\">" + (f[0]==="value" ? (v?fmt(v):"—") : (v?fmt1(v):"—")) + "</td>";
+  }).join("");
+  return cells + (extra||"");
+}
+function renderWeekly(){
+  var sec = $('[data-panel="weekly"]'); if(!sec) return;
+  var rolls = {}, i;
+  for(i=1;i<=53;i++) rolls[i] = emptyRoll();
+  Object.keys(DB.shift).forEach(function(iso){ addShiftToRoll(rolls[weekOfYear(iso)], iso); });
+  var tot = emptyRoll();
+  var rows = "";
+  for(i=1;i<=53;i++){
+    var o = rolls[i], start = addDays("2027-01-01", (i-1)*7);
+    ROLL_FIELDS.forEach(function(f){ tot[f[0]] += o[f[0]]; });
+    tot.supDays += o.supDays; tot.supSpon += o.supSpon;
+    var has = o.days > 0;
+    rows += '<tr class="'+(has?"has":"dim")+'"><td class="lbl" data-l="Week">Week '+i+(o.sample?' <span class="chip sample">Sample</span>':"")+'</td><td data-l="Starts">'+prettyDate(start)+"</td>" +
+      rollRowCells(o) + '<td data-l="Support — Days">'+(o.supDays?fmt1(o.supDays):"—")+'</td><td data-l="Support — Spondon">'+(o.supSpon?fmt1(o.supSpon):"—")+"</td></tr>";
+  }
+  rows += '<tr class="tot"><td class="lbl" data-l="Week">Year total</td><td data-l="Starts">2027</td>' + rollRowCells(tot) +
+    '<td data-l="Support — Days">'+fmt1(tot.supDays)+'</td><td data-l="Support — Spondon">'+fmt1(tot.supSpon)+"</td></tr>";
+  sec.innerHTML = '<div class="card pad"><div class="panel-head"><div><h2>Weekly</h2><div class="sheet">Workbook sheet: Shift Weekly · weeks run from 1 Jan 2027, as in the file</div></div></div>' +
+    '<p class="sec-sub">Auto-summed from saved Shift daily entries — nothing to type here. Weeks with no entries show as —.</p>' +
+    '<div class="tbl-scroll"><table class="tbl stack"><thead><tr><th>Week</th><th>Starts</th>' +
+    ROLL_FIELDS.map(function(f){ return "<th>"+f[1]+"</th>"; }).join("") + "<th>Support — Days</th><th>Support — Spondon</th></tr></thead><tbody>" + rows + "</tbody></table></div></div>";
+}
+function renderMonthly(){
+  var sec = $('[data-panel="monthly"]'); if(!sec) return;
+  var rolls = MONTHS.map(function(){ return emptyRoll(); });
+  Object.keys(DB.shift).forEach(function(iso){ addShiftToRoll(rolls[parseD(iso).getUTCMonth()], iso); });
+  /* day pick lines also count Support entries saved on days with no Shift entry */
+  Object.keys(DB.support).forEach(function(iso){
+    if(!DB.shift[iso]){ var st = supportTotals(iso); if(st) rolls[parseD(iso).getUTCMonth()].dayPickLines += st.dayPickLines; }
+  });
+  var tot = emptyRoll(); var totCycle = 0;
+  var rows = rolls.map(function(o, mi){
+    ROLL_FIELDS.forEach(function(f){ tot[f[0]] += o[f[0]]; });
+    tot.supDays += o.supDays; tot.supSpon += o.supSpon; tot.overtime += o.overtime; tot.dayPickLines += o.dayPickLines;
+    var cyc = DB.cycle["2027-"+(mi+1)] || ""; totCycle += num(cyc);
+    var has = o.days > 0;
+    return '<tr class="'+(has?"has":"dim")+'"><td class="lbl" data-l="Month">'+MONTHS[mi]+(o.sample?' <span class="chip sample">Sample</span>':"")+"</td>" +
+      rollRowCells(o) +
+      '<td data-l="Overtime">'+(o.overtime?fmt1(o.overtime):"—")+'</td><td data-l="Day pick lines">'+(o.dayPickLines?fmt(o.dayPickLines):"—")+"</td>" +
+      '<td data-l="Support — Days">'+(o.supDays?fmt1(o.supDays):"—")+'</td><td data-l="Support — Spondon">'+(o.supSpon?fmt1(o.supSpon):"—")+"</td>" +
+      '<td data-l="Cycle count"><input type="number" min="0" step="any" class="cycle-in" data-month="'+mi+'" value="'+cyc+'" placeholder="0" aria-label="Cycle count for '+MONTHS[mi]+'"></td></tr>';
+  }).join("");
+  rows += '<tr class="tot"><td class="lbl" data-l="Month">Year total</td>' + rollRowCells(tot) +
+    '<td data-l="Overtime">'+fmt1(tot.overtime)+'</td><td data-l="Day pick lines">'+fmt(tot.dayPickLines)+'</td><td data-l="Support — Days">'+fmt1(tot.supDays)+'</td><td data-l="Support — Spondon">'+fmt1(tot.supSpon)+'</td><td data-l="Cycle count">'+(totCycle?fmt(totCycle):"—")+"</td></tr>";
+  sec.innerHTML = '<div class="card pad"><div class="panel-head"><div><h2>Monthly</h2><div class="sheet">Workbook sheet: Monthly</div></div></div>' +
+    '<p class="sec-sub">Auto-summed from saved daily entries. Cycle count is the one figure typed here, as in the workbook.</p>' +
+    '<div class="tbl-scroll"><table class="tbl stack"><thead><tr><th>Month</th>' +
+    ROLL_FIELDS.map(function(f){ return "<th>"+f[1]+"</th>"; }).join("") + "<th>Overtime</th><th>Day pick lines</th><th>Support — Days</th><th>Support — Spondon</th><th>Cycle count</th></tr></thead><tbody>" + rows + "</tbody></table></div></div>";
+  $$(".cycle-in", sec).forEach(function(inp){ inp.addEventListener("change", function(){
+    var key = "2027-" + (num(inp.getAttribute("data-month")) + 1);
+    if(inp.value === "") delete DB.cycle[key]; else DB.cycle[key] = num(inp.value);
+    persist(); toast("Cycle count saved"); renderMonthly();
+  }); });
+}
+
+/* ---------------- history ---------------- */
+function renderHistory(){
+  var sec = $('[data-panel="history"]'); if(!sec) return;
+  var years = ["2023","2024","2025"];
+  var head = '<tr><th style="text-align:left">Month</th>' + years.map(function(y){ return "<th>"+y+"</th>"; }).join("") + "</tr>";
+  var body = MONTHS.map(function(mn, mi){
+    return '<tr><td class="lbl" data-l="Month">'+mn+"</td>" + years.map(function(y){
+      var v = HISTORY[y][mi];
+      return '<td data-l="'+y+'">'+(v===null?"—":fmt(v))+"</td>";
+    }).join("") + "</tr>";
+  }).join("");
+  var totals = years.map(function(y){
+    var s = 0, any = false;
+    HISTORY[y].forEach(function(v){ if(v!==null){ s += v; any = true; } });
+    return { y:y, s: any ? s : null };
+  });
+  body += '<tr class="tot"><td class="lbl" data-l="Month">Total of months shown</td>' + totals.map(function(t){
+    return '<td data-l="'+t.y+'">'+(t.s===null?"—":fmt(t.s))+"</td>"; }).join("") + "</tr>";
+  sec.innerHTML = '<div class="card pad"><div class="panel-head"><div><h2>History — Monthly Picks</h2><div class="sheet">Workbook sheet: Data Sheet</div></div></div>' +
+    '<p class="sec-sub">The only real figures in the workbook: monthly picks for 2023–2025. Jan–Jul 2023 are blank in the file and stay blank here. The file’s Diff / % columns are not reproduced — their basis isn’t clear from the sheet.</p>' +
+    historyLegend() + '<div class="chart-box" style="margin-bottom:16px">'+historyChartSVG(260)+"</div>" +
+    '<div class="tbl-scroll"><table class="tbl stack"><thead>'+head+"</thead><tbody>"+body+"</tbody></table></div></div>";
+}
+
+/* ---------------- capacity plans ---------------- */
+function renderCapacity(){
+  var sec = $('[data-panel="capacity"]'); if(!sec) return;
+  var plan = ROSTERS[state.capPlan], iso = state.capDate;
+  var saved = (DB.cap[state.capPlan][iso]) || {};
+  var sub = Object.keys(ROSTERS).map(function(k){
+    return '<button type="button" data-plan="'+k+'" class="'+(k===state.capPlan?"active":"")+'">'+ROSTERS[k].label+"</button>";
+  }).join("");
+  var head = '<tr><th style="text-align:left">Name</th><th style="text-align:left">Absence</th>' +
+    plan.acts.map(function(a){ return "<th>"+a[1]+"</th><th>Hrs</th>"; }).join("") + "<th>Total hrs</th></tr>";
+  var totCap = {}, totHrs = {}, grand = 0;
+  plan.acts.forEach(function(a){ totCap[a[0]] = 0; totHrs[a[0]] = 0; });
+  var body = plan.people.map(function(name, pi){
+    var rec = saved[name] || {};
+    var rowTot = 0;
+    var cells = plan.acts.map(function(a){
+      var cap = rec[a[0]+"Cap"], hrs = rec[a[0]+"Hrs"];
+      totCap[a[0]] += num(cap); totHrs[a[0]] += num(hrs); rowTot += num(hrs);
+      return '<td data-l="'+a[1]+'"><input type="number" min="0" step="any" data-p="'+pi+'" data-k="'+a[0]+'Cap" value="'+(cap===undefined?"":cap)+'" placeholder="0" aria-label="'+esc(name)+" "+a[1]+'"></td>' +
+             '<td data-l="'+a[1]+' hrs"><input type="number" min="0" step="any" data-p="'+pi+'" data-k="'+a[0]+'Hrs" value="'+(hrs===undefined?"":hrs)+'" placeholder="0" aria-label="'+esc(name)+" "+a[1]+' hours"></td>';
+    }).join("");
+    grand += rowTot;
+    var absOpts = ABSENCES.map(function(a){ return '<option value="'+a+'"'+(rec.absence===a?" selected":"")+">"+(a===""?"—":a)+"</option>"; }).join("");
+    return '<tr><td class="nm" data-l="Name">'+esc(name)+'</td><td data-l="Absence"><select data-p="'+pi+'" data-k="absence" aria-label="'+esc(name)+' absence">'+absOpts+"</select></td>" + cells +
+      '<td data-l="Total hrs"><b>'+fmt1(rowTot)+"</b></td></tr>";
+  }).join("");
+  var foot = '<tr class="tot"><td class="lbl" data-l="Name">Team total</td><td data-l="Absence"></td>' +
+    plan.acts.map(function(a){ return '<td data-l="'+a[1]+'">'+fmt(totCap[a[0]])+'</td><td data-l="'+a[1]+' hrs">'+fmt1(totHrs[a[0]])+"</td>"; }).join("") +
+    '<td data-l="Total hrs">'+fmt1(grand)+"</td></tr>";
+  var dates = Object.keys(DB.cap[state.capPlan]).sort();
+  sec.innerHTML = '<div class="card pad"><div class="panel-head"><div><h2>Capacity Plans</h2><div class="sheet">Workbook sheets: MMC Cap-Plan · CLE Cap-Plan · Weekend Cap-Plan</div></div>' +
+    '<div class="date-ctl"><label>Date <input type="date" id="capDate" min="2027-01-01" max="2027-12-31" value="'+iso+'"></label><span class="day-name">'+dayName(iso)+" · "+prettyDate(iso)+"</span></div></div>" +
+    '<div class="cap-subtabs">'+sub+"</div>" +
+    '<div class="absence-legend">Absence codes from the workbook key: ' + ABSENCES.slice(1).map(function(a){ return '<span class="chip">'+a+"</span>"; }).join("") + "</div>" +
+    '<div class="tbl-scroll"><table class="tbl stack"><thead>'+head+"</thead><tbody>"+body+foot+"</tbody></table></div>" +
+    '<div class="form-actions" style="margin-top:14px"><button type="button" class="btn primary" id="capSave">Save plan</button><span class="saved-msg" id="capMsg"></span></div>' +
+    '<div class="saved-days"><h3>Saved dates — '+plan.label+'</h3><div class="day-list">' +
+    (dates.length ? dates.map(function(d){ return '<button type="button" data-capdate="'+d+'" class="'+(d===iso?"sel":"")+'">'+prettyDate(d)+"</button>"; }).join("") : '<span class="empty-note">No dates saved yet for this plan.</span>') +
+    "</div></div></div>";
+  $$("[data-plan]", sec).forEach(function(b){ b.addEventListener("click", function(){ state.capPlan = b.getAttribute("data-plan"); renderCapacity(); }); });
+  $("#capDate", sec).addEventListener("change", function(ev){ state.capDate = ev.target.value || DEFAULT_DATE; renderCapacity(); });
+  $$("[data-capdate]", sec).forEach(function(b){ b.addEventListener("click", function(){ state.capDate = b.getAttribute("data-capdate"); renderCapacity(); }); });
+  $("#capSave", sec).addEventListener("click", function(){
+    var rec = {};
+    $$("[data-p]", sec).forEach(function(inp){
+      var name = plan.people[num(inp.getAttribute("data-p"))], k = inp.getAttribute("data-k");
+      if(!rec[name]) rec[name] = {};
+      rec[name][k] = (inp.tagName === "SELECT") ? inp.value : (inp.value==="" ? "" : num(inp.value));
+    });
+    DB.cap[state.capPlan][state.capDate] = rec; persist();
+    $("#capMsg", sec).textContent = "Saved · " + prettyDate(state.capDate);
+    toast(plan.label + " saved for " + prettyDate(state.capDate)); renderCapacity();
+  });
+}
+
+/* ---------------- error log ---------------- */
+var ERR_TYPES = ["Pick Error","Build Error","EOLA Error","Other"];
+function renderErrors(){
+  var sec = $('[data-panel="errors"]'); if(!sec) return;
+  var byGroup = { MMC:0, CLE:0, Weekend:0 }, byType = {}, total = 0;
+  ERR_TYPES.forEach(function(t){ byType[t] = 0; });
+  DB.errors.forEach(function(er){
+    var c = num(er.count) || 1; total += c;
+    if(byGroup[er.group] !== undefined) byGroup[er.group] += c;
+    if(byType[er.type] === undefined) byType[er.type] = 0; byType[er.type] += c;
+  });
+  var chips = '<span class="sum-chip">Total errors <b>'+total+"</b></span>" +
+    ["MMC","CLE","Weekend"].map(function(g){ return '<span class="sum-chip">'+g+" <b>"+byGroup[g]+"</b></span>"; }).join("") +
+    ERR_TYPES.map(function(t){ return '<span class="sum-chip">'+t+" <b>"+(byType[t]||0)+"</b></span>"; }).join("");
+  var operators = [];
+  ["mmc","cle","weekend"].forEach(function(k){ ROSTERS[k].people.forEach(function(p){ if(p.indexOf("OT ")!==0 && operators.indexOf(p)<0) operators.push(p); }); });
+  var opOpts = operators.map(function(o){ return '<option value="'+esc(o)+'">'+esc(o)+"</option>"; }).join("");
+  var rows = DB.errors.map(function(er, i){
+    return "<tr><td class=\"lbl\" data-l=\"Date\">"+prettyDate(er.date)+(er._sample?' <span class="chip sample">Sample</span>':"")+'</td><td data-l="Day">'+esc(er.day)+'</td><td data-l="Count">'+num(er.count)+'</td><td data-l="Part issue">'+esc(er.partIssue)+'</td><td data-l="Error">'+esc(er.error)+'</td><td data-l="Area">'+esc(er.area)+'</td><td class="lbl" data-l="Operator">'+esc(er.operator)+'</td><td data-l="Type">'+esc(er.type)+'</td><td data-l="Pick No.">'+esc(er.pickNo)+'</td><td data-l="Part No.">'+esc(er.partNo)+'</td><td data-l="Lot No.">'+esc(er.lotNo)+'</td><td data-l="ICAR">'+esc(er.icar)+(er.icarNo?" · "+esc(er.icarNo):"")+'</td><td data-l="Meeting">'+esc(er.meeting)+'</td><td data-l="Group">'+esc(er.group)+'</td><td data-l=""><button type="button" class="icon-btn" data-delerr="'+i+'" aria-label="Delete error entry">×</button></td></tr>';
+  }).join("");
+  sec.innerHTML = '<div class="card pad"><div class="panel-head"><div><h2>Error Log</h2><div class="sheet">Workbook sheet: Error Log</div></div></div>' +
+    '<div class="sum-chips">'+chips+"</div>" +
+    '<div id="errForm"><div class="fgroup"><h3>Add an error</h3><div class="fgrid">' +
+    '<div class="fld"><label for="e_date">Date</label><input type="date" id="e_date" min="2027-01-01" max="2027-12-31" value="'+DEFAULT_DATE+'" required></div>' +
+    '<div class="fld"><label for="e_count">Error count</label><input type="number" id="e_count" min="1" step="1" value="1"></div>' +
+    '<div class="fld"><label for="e_partIssue">Part issue</label><input type="text" id="e_partIssue" placeholder="e.g. Over / Short"></div>' +
+    '<div class="fld"><label for="e_error">Error</label><input type="text" id="e_error"></div>' +
+    '<div class="fld"><label for="e_area">Area</label><input type="text" id="e_area" placeholder="e.g. CLE"></div>' +
+    '<div class="fld"><label for="e_operator">Operator</label><input type="text" id="e_operator" list="opList" placeholder="Name"><datalist id="opList">'+opOpts+"</datalist></div>" +
+    '<div class="fld"><label for="e_type">Error type</label><select id="e_type">'+ERR_TYPES.map(function(t){ return "<option>"+t+"</option>"; }).join("")+"</select></div>" +
+    '<div class="fld"><label for="e_group">MMC / CLE / W.E</label><select id="e_group"><option>MMC</option><option>CLE</option><option>Weekend</option></select></div>' +
+    '<div class="fld"><label for="e_pickNo">Pick number</label><input type="text" id="e_pickNo"></div>' +
+    '<div class="fld"><label for="e_partNo">Part number</label><input type="text" id="e_partNo"></div>' +
+    '<div class="fld"><label for="e_lotNo">Lot number</label><input type="text" id="e_lotNo"></div>' +
+    '<div class="fld"><label for="e_icar">ICAR (Yes/No)</label><select id="e_icar"><option>No</option><option>Yes</option></select></div>' +
+    '<div class="fld"><label for="e_icarNo">ICAR number</label><input type="text" id="e_icarNo"></div>' +
+    '<div class="fld"><label for="e_meeting">Meeting held (Y/N)</label><select id="e_meeting"><option>N</option><option>Y</option></select></div>' +
+    '</div></div><div class="form-actions"><button type="button" id="errAdd" class="btn primary">Add error</button><span class="saved-msg" id="errMsg"></span></div></div></div>' +
+    '<div class="card pad" style="margin-top:14px"><div class="sec-title">Logged errors</div><div class="sec-sub">'+DB.errors.length+" entr"+(DB.errors.length===1?"y":"ies")+"</div>" +
+    (DB.errors.length ? '<div class="tbl-scroll"><table class="tbl stack"><thead><tr><th>Date</th><th>Day</th><th>Count</th><th>Part issue</th><th>Error</th><th>Area</th><th>Operator</th><th>Type</th><th>Pick No.</th><th>Part No.</th><th>Lot No.</th><th>ICAR</th><th>Meeting</th><th>Group</th><th></th></tr></thead><tbody>'+rows+"</tbody></table></div>"
+      : '<p class="sec-sub" style="margin:0">No errors logged yet.</p>') + "</div>";
+  $("#errAdd", sec).addEventListener("click", function(){
+    var d = $("#e_date", sec).value || DEFAULT_DATE;
+    DB.errors.push({ date:d, day:dayName(d), count:num($("#e_count", sec).value)||1,
+      partIssue:$("#e_partIssue", sec).value, error:$("#e_error", sec).value, area:$("#e_area", sec).value,
+      operator:$("#e_operator", sec).value, type:$("#e_type", sec).value, group:$("#e_group", sec).value,
+      pickNo:$("#e_pickNo", sec).value, partNo:$("#e_partNo", sec).value, lotNo:$("#e_lotNo", sec).value,
+      icar:$("#e_icar", sec).value, icarNo:$("#e_icarNo", sec).value, meeting:$("#e_meeting", sec).value });
+    DB.errors.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+    persist(); buildTabs(); markActiveTab(); renderErrors(); toast("Error logged for " + prettyDate(d));
+  });
+  $$("[data-delerr]", sec).forEach(function(b){ b.addEventListener("click", function(){
+    DB.errors.splice(num(b.getAttribute("data-delerr")), 1); persist(); buildTabs(); markActiveTab(); renderErrors(); toast("Error entry removed");
+  }); });
+}
+
+/* =====================================================================
+   Sample day — clearly labelled SAMPLE figures (Mon 4 Jan 2027, plus a
+   weekend sample on Sat 2 Jan 2027) so every calculation can be seen working.
+   ===================================================================== */
+var SAMPLE_DATE = "2027-01-04", SAMPLE_WKND = "2027-01-02";
+function sampleData(){
+  return {
+    shift: { _sample:true, picks:2450, kitsBuilt:1980, shippedKits:1875, handoverLines:320, piCount:1450,
+      holidayHrs:16, sicknessHrs:7.5, workedHours:412, hoursDeployed:438, lostTimeHrs:21.5, overtime:12,
+      shippedLines:6180, processedLines:46172, value:38500, fullShiftCapacity:460, supDays:225, supSpon:38,
+      comments:"Sample day — figures invented for demonstration only." },
+    mmc: { _sample:true, picks:1820, kitsBuilt:1640, shipped:1590, kanban:96, sicknessHrs:4, holidayHrs:8, workedHours:286,
+      pickLines:5120, pickHrs:118, putawayLines:6840, putawayHrs:74, auditLines:1980, auditHrs:34, beAuditLines:4760, beAuditHrs:33,
+      shippingHrs:22, cleSupport:14, handoverLines:210, handoverUncHrs:6.5, fiveSHrs:4, drivingHrs:9, trainingHrs:3, briefsHrs:2.5,
+      comments:"Sample day — figures invented for demonstration only." },
+    cle: { _sample:true, picks:2140, buildLines:1530, sicknessHrs:3.5, holidayHrs:12, workedHours:264,
+      pickLines:8540, pickHrs:136, putawayLines:5980, putawayHrs:47, buildKLines:1530, buildKHrs:42,
+      shippingHrs:18, fiveSHrs:3, drivingHrs:7.5, trainingHrs:2, briefsHrs:1.5, configHrs:12,
+      coParents:240, coNonGolden:18, coBoxesCompleted:226, coBoxesShipped:219, coParentsFailed:7,
+      coReasons:"Sample — short picks on two kit parents." },
+    weekend: { _sample:true, mmcPicks:640, mmcBuilt:590, mmcShipped:575, clePicks:720, cleBuilt:655, cleBuildLines:690, cleShipped:640,
+      handoverLines:140, sicknessHrs:0, holidayHrs:0, workedHours:96, overtime:96,
+      mmcPickLines:1980, mmcPickHrs:47, mmcPutawayLines:2140, mmcPutawayHrs:26, mmcBeAuditLines:1470, mmcBeAuditHrs:20,
+      clePickLines:2650, clePickHrs:43, clePutawayLines:2470, clePutawayHrs:19, cleBuildKLines:690, cleBuildKHrs:19,
+      shippingHrs:10, fiveSHrs:2, drivingHrs:4, trainingHrs:0, briefsHrs:1,
+      comments:"Sample weekend — figures invented for demonstration only." },
+    support: { _sample:true, piLines:480, piHrs:22, shippingLines:3150, shippingHrs:44, confirmingLines:2870, confirmingHrs:41,
+      vendorLines:240, vendorHrs:26, ltlLines:5400, ltlHrs:29, putawayLines:690, putawayHrs:24, eolaLines:475, eolaHrs:18,
+      dayPicksLines:395, dayPicksHrs:21, sponDayPicks:310, sponKitPicks:845, sponPutaway:260, sponPi:190, sponTotalHours:38 },
+    errors: [
+      { date:SAMPLE_DATE, day:"Monday", count:1, partIssue:"Short", error:"1 short pick", area:"MMC", operator:"Airidas Firantas",
+        type:"Pick Error", group:"MMC", pickNo:"PK-1042", partNo:"KT-2210", lotNo:"L88", icar:"No", icarNo:"", meeting:"Y", _sample:true },
+      { date:SAMPLE_DATE, day:"Monday", count:1, partIssue:"Over", error:"Wrong component fitted", area:"CLE", operator:"Leif Smith",
+        type:"Build Error", group:"CLE", pickNo:"PK-1077", partNo:"KT-1984", lotNo:"L91", icar:"Yes", icarNo:"ICAR-014", meeting:"Y", _sample:true }
+    ]
+  };
+}
+function loadSample(){
+  var s = sampleData();
+  DB.shift[SAMPLE_DATE] = s.shift; DB.mmc[SAMPLE_DATE] = s.mmc; DB.cle[SAMPLE_DATE] = s.cle; DB.support[SAMPLE_DATE] = s.support;
+  DB.weekend[SAMPLE_WKND] = s.weekend;
+  DB.errors = DB.errors.filter(function(e){ return !e._sample; }).concat(s.errors);
+  DB.errors.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+  persist();
+  state.dashDate = SAMPLE_DATE;
+  ["shift","mmc","cle","support"].forEach(function(k){ state.dates[k] = SAMPLE_DATE; });
+  state.dates.weekend = SAMPLE_WKND;
+  refreshAllPanels();
+  toast("Sample day loaded — Mon 4 Jan 2027 (+ weekend Sat 2 Jan). All sample figures are labelled Sample.");
+}
+function clearSample(){
+  ["shift","mmc","cle","weekend","support"].forEach(function(k){
+    Object.keys(DB[k]).forEach(function(d){ if(DB[k][d]._sample) delete DB[k][d]; });
+  });
+  DB.errors = DB.errors.filter(function(e){ return !e._sample; });
+  persist(); refreshAllPanels(); toast("Sample data cleared — your own entries are untouched.");
+}
+function hasSample(){
+  return ["shift","mmc","cle","weekend","support"].some(function(k){
+    return Object.keys(DB[k]).some(function(d){ return DB[k][d]._sample; });
+  }) || DB.errors.some(function(e){ return e._sample; });
+}
+function refreshSampleButtons(){ document.getElementById("btnClearSample").hidden = !hasSample(); }
+function refreshAllPanels(){
+  buildTabs(); markActiveTab();
+  ["shift","mmc","cle","weekend","support"].forEach(function(k){
+    var sec = document.querySelector('[data-panel="'+k+'"]');
+    if(sec){ $(".entry-date", sec).value = state.dates[k]; loadEntryIntoForm(sec, SCHEMAS[k]); }
+  });
+  renderDashboard(); refreshSampleButtons();
+  if(state.tab==="weekly") renderWeekly();
+  if(state.tab==="monthly") renderMonthly();
+  if(state.tab==="errors") renderErrors();
+  if(state.tab==="capacity") renderCapacity();
+}
+
+/* ---------------- static panels + init ---------------- */
+function staticPanel(id){ var s = document.createElement("section"); s.className = "panel"; s.setAttribute("data-panel", id); document.getElementById("main").appendChild(s); return s; }
+(function init(){
+  staticPanel("dashboard"); staticPanel("weekly"); staticPanel("monthly"); staticPanel("capacity"); staticPanel("errors"); staticPanel("history");
+  ["shift","mmc","cle","weekend","support"].forEach(function(k){ buildEntryPanel(SCHEMAS[k]); });
+  buildTabs();
+  document.getElementById("btnSample").addEventListener("click", loadSample);
+  document.getElementById("btnClearSample").addEventListener("click", clearSample);
+  var wipe = document.getElementById("btnWipe"), armed = null;
+  wipe.addEventListener("click", function(){
+    if(!armed){ wipe.textContent = "Tap again to delete ALL entries"; wipe.classList.add("armed");
+      armed = setTimeout(function(){ wipe.textContent = "Clear all entries"; wipe.classList.remove("armed"); armed = null; }, 3200); return; }
+    clearTimeout(armed); armed = null;
+    DB = blankDB(); persist();
+    wipe.textContent = "Clear all entries"; wipe.classList.remove("armed");
+    refreshAllPanels(); toast("All entries cleared — back to the workbook’s blank start.");
+  });
+  refreshSampleButtons();
+  showTab("dashboard");
+})();
+</script>
+</body>
+</html>
+</script>
+  </body>
+</html>
